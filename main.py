@@ -2,6 +2,8 @@ from InstagramAPI import InstagramAPI
 import requests
 import random
 import time
+import re
+
 
 
 class ToolsFeed(InstagramAPI):
@@ -72,11 +74,21 @@ class ToolsFeed(InstagramAPI):
         :return: Возвращает отформатированный список имен
         '''
         data = []
-        with open(file) as file:
+        with open(file+'.txt') as file:
             for user in file:
                 user = user.rstrip()
                 data.append(user)
             return data
+
+    def writer_base(self, data, file):
+        '''
+        Записываем данные в файл
+        :param data: Что записывать(пользователи)
+        :param file: как назовем файл
+        :return:
+        '''
+        with open(file+'.txt', 'a') as f:
+            f.write(data+'\n')
 
     def get_followings(self):
         '''
@@ -89,6 +101,7 @@ class ToolsFeed(InstagramAPI):
         for user in json['users']:
             followings.append(user['username'])
         return followings
+
 
     def following(self, file, count, time_min=0, time_max=1, private=False):
         '''
@@ -104,8 +117,6 @@ class ToolsFeed(InstagramAPI):
         followings = set(self.get_followings())
         not_followings = list(users - followings)
         counter = 0
-        lena = len(not_followings)
-
         while True:
             try:
                 if counter == count:
@@ -139,7 +150,6 @@ class ToolsFeed(InstagramAPI):
 
         return print('Все подписки совершены')
 
-
     def download_all_video(self, user):
         '''
         Скачивает все видео с аккаунта
@@ -147,7 +157,7 @@ class ToolsFeed(InstagramAPI):
         :return:
         '''
         increment = 0
-        id = self.get_id(user)
+        id = self.get_data(user)
         feeds = self.getTotalUserFeed(id)
         for i in feeds:
             try:
@@ -162,12 +172,14 @@ class ToolsFeed(InstagramAPI):
             print(f"Загрузка видео номер - {increment}")
         return print('Все видеофайлы загружены!')
 
-    def writer_base(self, data, file):
-        with open(file+'.txt', 'a') as f:
-            f.write(data+'\n')
-
-    def filter_data(self, count,file_in='',file_out=''):
-        #Нужна база в ID #Придется делать 2 запроса  нужна оптимизация
+    def filter_data_for_day(self, count,file_in='',file_out=''):
+        '''
+        Фильтруем базу по дате последнего поста
+        :param count: сколько дней назад
+        :param file_in: Название файла с базой, которую будем фильтровать
+        :param file_out: Название файла, куда будут записываться отфильтрованные пользователи
+        :return:
+        '''
         one_day = 86400
         sleep = lambda x: time.sleep(x)
         users = self.rename(file_in)
@@ -203,20 +215,57 @@ class ToolsFeed(InstagramAPI):
                 print(f'Последняя публикация пользователя {user} больше {count} дней назад, пропускаю')
             sleep(0.5)
 
+
+
+    def filter_data_for_words(self, stop_words = 'stop', file_in='', file_out=''):
+        #TODO Доделывай давай
+
+        reg = re.compile('[^a-zA-Zа-яА-Я ]')
+        sleep = lambda x: time.sleep(x)
+        users = self.rename(file_in)
+        words_old = self.rename(stop_words)
+        words = []
+
+        for word in words_old:
+            words.append(word.lower())
+
+        words = set(words)
+        for user in users:
+            try:
+                user_biography = self.get_data(user, parameters=['biography'])
+                user_biography = user_biography.lower()
+                user_biography = reg.sub('', user_biography)
+                user_biography = user_biography.split(' ')
+            except KeyError:
+                print(f'Пользователя {user} не существует, пропускаем')
+                sleep(0.5)
+                continue
+
+            user_biography = set(user_biography)
+
+            if words.isdisjoint(user_biography):
+                print(f'{user} не имеет стоп слов, добавляю')
+                self.writer_base(file=file_out)
+                sleep(1)
+            else:
+                print(f'{user} есть в стоп листе, пропускаю')
+
 def main():
 
     # api.download_all_video('run_vine') пример парсинга видео
-    # api.following('name.txt', 7, time_min=10, time_max=15) #Пример фоловинга
+    # api.following('volchara.txt', 800, time_min=120, time_max=130) #Пример фоловинга
     # api.get_dict_followings()
     # data = api.get_data('go_na_butilku', parameters=['full_name', 'pk', 'is_private'])  # Пример атрибутов инстаграмма
-    # api.filter_data(5, file_in='name.txt', file_out='date_of_5')# Пример фльтра
+    # api.filter_data_for_day(5, file_in='name', file_out='date_of_5')# Пример фльтра
     # volchara_ebuchiy: Vo2019ra
     # dunkan_makridi Du2019an
 
-    api = ToolsFeed("volchara_ebuchiy", "Vo2019ra")
+    api = ToolsFeed("dunkan_makridi", "Du2019an")
     if api.login():
-        api.following('volchara.txt', 800, time_min=120, time_max=130)
 
+        bio = api.filter_data_for_words(file_in='name', file_out='filter_words')
+
+        print(1)
 
 
     else:
@@ -234,8 +283,3 @@ if __name__ == '__main__':
     # constr2 = {'Ken', 'Lock', 'Job', 'Peter', 'Keny'}
     # constr3 = constr - constr2
     # print(constr3)
-
-    #Волчара Старт: 1106 подписок
-    #Волчара Утро:
-    # c 300 from name.txt search 96   jhonny_brasko
-    #очко вфцв фцв вфцв
