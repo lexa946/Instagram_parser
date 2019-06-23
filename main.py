@@ -271,8 +271,6 @@ def main():
 
         bio = api.filter_data_for_day(7,file_in='filter_words', file_out='filter_all_for_7_days')
 
-        # dawd awd aw
-        # awdawdawd
 
     else:
         print("Can't login!")
