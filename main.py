@@ -217,8 +217,14 @@ class ToolsFeed(InstagramAPI):
 
 
 
-    def filter_data_for_words(self, stop_words = 'stop', file_in='', file_out=''):
-        #TODO Доделывай давай
+    def filter_data_for_words(self, stop_words = '', file_in='', file_out=''):
+        '''
+        Фильтрует пользователей по стоп словам
+        :param stop_words: база стоп слов
+        :param file_in: база имен инстаграм
+        :param file_out: файл в который записывать валидных пользователей
+        :return:
+        '''
 
         reg = re.compile('[^a-zA-Zа-яА-Я ]')
         sleep = lambda x: time.sleep(x)
@@ -238,14 +244,14 @@ class ToolsFeed(InstagramAPI):
                 user_biography = user_biography.split(' ')
             except KeyError:
                 print(f'Пользователя {user} не существует, пропускаем')
-                sleep(0.5)
+                sleep(1)
                 continue
 
             user_biography = set(user_biography)
 
             if words.isdisjoint(user_biography):
                 print(f'{user} не имеет стоп слов, добавляю')
-                self.writer_base(file=file_out)
+                self.writer_base(user, file=file_out)
                 sleep(1)
             else:
                 print(f'{user} есть в стоп листе, пропускаю')
@@ -263,9 +269,8 @@ def main():
     api = ToolsFeed("dunkan_makridi", "Du2019an")
     if api.login():
 
-        bio = api.filter_data_for_words(file_in='name', file_out='filter_words')
+        bio = api.filter_data_for_day(7,file_in='filter_words', file_out='filter_all_for_7_days')
 
-        print(1)
 
 
     else:
