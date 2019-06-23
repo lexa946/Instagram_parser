@@ -11,7 +11,7 @@ class ToolsFeed(InstagramAPI):
 
     def get_data(self, user, parameters=['pk']):
         '''
-        Получаем ID пользователя
+        Получаем данные пользователя
         :param user: Имя инстаграмма
         :param data: Передаем что хотим получить (pk, biography, full_name, is_private)
         :return: Возвращает список запрошенных данных, либо None если не удалось найти аккаунт (По умолчанию: ID)
@@ -213,9 +213,9 @@ def main():
     # volchara_ebuchiy: Vo2019ra
     # dunkan_makridi Du2019an
 
-    api = ToolsFeed("dunkan_makridi", "Du2019an")
+    api = ToolsFeed("volchara_ebuchiy", "Vo2019ra")
     if api.login():
-        api.filter_data(5, file_in='Volnushka.txt', file_out='date_of_5')
+        api.following('volchara.txt', 800, time_min=120, time_max=130)
 
 
 
