@@ -1,8 +1,10 @@
 from InstagramAPI import InstagramAPI
+from moviepy.editor import *
 import requests
 import random
 import time
 import re
+import os
 
 
 
@@ -150,6 +152,26 @@ class ToolsFeed(InstagramAPI):
 
         return print('Все подписки совершены')
 
+    def all_unfolowing(self,time_min=0, time_max=1):
+        """
+        Функция производит отписки от всех пользователей
+        :param time_min: минимальное время задержки
+        :param time_max: максимальное время задержки
+        :return:
+        """
+
+        followings = self.get_followings()
+
+        for user in followings:
+            user_id = self.get_data(user)
+            self.unfollow(user_id)
+            print(f'Отписка от {user} совершена')
+            time.sleep(random.randint(time_min, time_max))
+        print('Все отписки совершены')
+
+
+
+
     def download_all_video(self, user):
         '''
         Скачивает все видео с аккаунта
@@ -256,21 +278,68 @@ class ToolsFeed(InstagramAPI):
             else:
                 print(f'{user} есть в стоп листе, пропускаю')
 
+    def upload_photo(self,data,photo, caption='Ядреные приколы, не пропусти'):
+        '''
+        Загружает фото в ленту
+        :param data: когда загружать фото, по формату Д-М-Г Ч:М:С
+        :param photo: Название фотографии в папке Image
+        :param caption: Описани под постом
+        :return:
+        '''
+        path = os.getcwd() + '\image\\'
+        timer = int(time.mktime( time.strptime(data, '%d-%m-%Y %H:%M:%S')))
+        while True:
+            time_now = time.time()
+
+            print(f'{timer - time_now} осталось')
+            if timer > time_now:
+                print(f'{photo}  жду 10 сек {time_now}')
+                time.sleep(10)
+                continue
+            print('сработало')
+            self.uploadPhoto(photo=path+photo, caption=caption)
+            break
+        print(f'{photo} загружено')
+
+    def upload_video(self,data,video, caption=''):
+        '''
+        Загружает видео в ленту
+        :param data: когда загружать видео, по формату Д-М-Г Ч:М:С
+        :param video: Название видео в папке video
+        :param caption: Описани под постом
+        :return:
+        '''
+        path = os.getcwd() + '\\video\\'
+        clip = VideoFileClip(path+video)
+
+        time_post = int(time.mktime( time.strptime(data, '%d-%m-%Y %H:%M:%S')))
+        time_now = time.time()
+        timer = time_post - time_now
+        print(f'{timer} осталось ждать')
+        time.sleep(timer)
+        print(f'Время для {video} пришло')
+        clip.save_frame(os.getcwd() + '\\video\\' + 'one_frames.jpg')
+        self.uploadVideo(path+video, path+'one_frames.jpg', caption=caption)
+        print(f'{video} загружено')
+
+
+
 def main():
 
     # api.download_all_video('run_vine') пример парсинга видео
     # api.following('volchara.txt', 800, time_min=120, time_max=130) #Пример фоловинга
-    # api.get_dict_followings()
     # data = api.get_data('go_na_butilku', parameters=['full_name', 'pk', 'is_private'])  # Пример атрибутов инстаграмма
-    # api.filter_data_for_day(5, file_in='name', file_out='date_of_5')# Пример фльтра
+    # api.filter_data_for_day(5, file_in='name', file_out='date_of_5')# Пример фльтра по дням
+    # api.filter_data_for_day(7,file_in='filter_words', file_out='filter_all_for_7_days') #Пример фльтра по стоп словам
+    # api.upload_photo('24-06-2019 10:42:00','3.jpg') # Пример отложенного постинга фото
+    # api.upload_video('24-06-2019 15:37:30', 'video_0.mp4') #Пример отложенного постинга видео
+    # api.all_unfolowing(time_min=120, time_max=130) # Пример отписок
+
     # volchara_ebuchiy: Vo2019ra
     # dunkan_makridi Du2019an
 
     api = ToolsFeed("dunkan_makridi", "Du2019an")
     if api.login():
-
-        bio = api.filter_data_for_day(7,file_in='filter_words', file_out='filter_all_for_7_days')
-
 
     else:
         print("Can't login!")
